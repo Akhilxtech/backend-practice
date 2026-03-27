@@ -4,7 +4,7 @@ import connectMongo from "./src/common/config/db.js";
 
 
 
-const PORT=process.env.PORT;
+const PORT=process.env.PORT||8080;
 
 const main = async () => {
 
