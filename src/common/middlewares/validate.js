@@ -4,7 +4,7 @@ const validate=(baseDtoClass)=>{
         const {error,value}=baseDtoClass.validate(req.body);
 
         if(error){
-            throw ApiError.badRequest(error.join(","));
+            throw ApiError.badRequest(error);
         }
         req.body=value;
         
@@ -12,3 +12,5 @@ const validate=(baseDtoClass)=>{
         
     }
 }
+
+export default validate

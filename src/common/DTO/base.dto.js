@@ -11,7 +11,7 @@ class BaseDto {
 
 
         if(error){
-            const errors=error.details.map((e)=> e.message);
+            const errors=error.details.map((e)=> e.message).join("; ");
             return {value:null,error};
         }
         else{
@@ -19,3 +19,5 @@ class BaseDto {
         }
     }
 }
+
+export default BaseDto

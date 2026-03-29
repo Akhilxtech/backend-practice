@@ -1,7 +1,7 @@
 class ApiError extends Error{
     constructor(statusCode, message){
         super(message);
-        this.statusCode=this.statusCode;
+        this.statusCode=statusCode;
         this.isOperetional=true;
         Error.captureStackTrace(this, this.constructor)
     }
@@ -25,6 +25,14 @@ class ApiError extends Error{
 
     static internalServerError(message="internal server error"){
         return new ApiError(500, message);
+    }
+
+    static conflict(message="conflict"){
+        return new ApiError(409, message);
+    }
+
+    static missing(message="something is missing"){
+        return new ApiError(401,message)
     }
 
 }
