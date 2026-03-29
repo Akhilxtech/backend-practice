@@ -19,7 +19,7 @@ const generateRefreshToken=(payload)=>{
 }
 
 const verifyRefreshToken=(token)=>{
-    jwt.verify(token,process.env.JWT_REFRESH_SECRET)
+    return jwt.verify(token,process.env.JWT_REFRESH_SECRET)
 }
 
 const generateToken= ()=>{
@@ -29,10 +29,17 @@ const generateToken= ()=>{
     return {rawToken, hashedToken}
 }
 
+const hashToken=(token)=>{
+    const hashedToken=crypto.createHash('sha256').update(token).digest('hex');
+    return hashedToken;
+}
+
+
 export {
     generateToken,
     verifyAccessToken,
     generateRefreshToken,
     generateAccessToken,
-    verifyRefreshToken
+    verifyRefreshToken,
+    hashToken
 }

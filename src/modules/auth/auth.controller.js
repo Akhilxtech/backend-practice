@@ -23,7 +23,8 @@ const login=async (req,res)=>{
      const {userObj,accessToken, refreshToken}=await authService.login(req.body);
      res.cookie("refreshToken",refreshToken,{
         httpOnly:true,
-        secure:true,
+        secure:process.env.NODE_ENV==="Production",
+        sameSite:"strict",
         maxAge:7*24*60*60*1000 // 7 days
      })
 
@@ -43,7 +44,8 @@ const logout=async(req,res)=>{
         const user=await authService.logout(req.user.id);
         res.clearCookie("refreshToken",{
             httpOnly:true,
-            secure:true
+            secure:process.env.NODE_ENV==="Production",            
+            sameSite:"Strict",
         })
         ApiResponse.ok(res,"logout successfully");
     } catch (error) {
@@ -77,10 +79,25 @@ const resetPassword=async(req,res)=>{
     try {
         const {token}=req.params;
         const {newPassword}=req.body;
+
+        console.log(req.body);
+        
+
+        
         await authService.resetPassword(token,newPassword);
         ApiResponse.ok(res,"password reset successfull")
     } catch (error) {
         console.log("error reseting password: ",error);
     }
 }
-export {register,verifyEmail,login,logout, getMe,forgotPassword,resetPassword};
+
+const newAccessToken=async (req,res)=>{
+    try {
+        const {accessToken}=await authService.generateNewAcessToken(req.cookies?.refreshToken);
+        ApiResponse.ok(res,"Access Token Generated successfully",accessToken);
+    } catch (error) {
+        console.log("error generating access token");
+        
+    }
+}
+export {register,verifyEmail,login,logout, getMe,forgotPassword,resetPassword,newAccessToken};

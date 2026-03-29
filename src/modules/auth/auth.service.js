@@ -1,14 +1,12 @@
 import User from "../auth/auth.model.js"
 import ApiError from "../../common/utils/Api-error-response.js";
-import { generateAccessToken, generateRefreshToken, generateToken } from "../../common/utils/jwt-utils.js";
+import { generateAccessToken, generateRefreshToken, generateToken, hashToken, verifyRefreshToken } from "../../common/utils/jwt-utils.js";
 import { sendMail, sendResetPasswordMail, sendVerificationMail } from "../../common/config/mail.js";
 import crypto from "crypto"
 import { devNull } from "os";
+import { log } from "console";
 
-const hashToken=(token)=>{
-    const hashedToken=crypto.createHash('sha256').update(token).digest('hex');
-    return hashedToken;
-}
+
 
 const register=async ({name,email,password,role})=>{
     const alreadyExist=await User.findOne({email});
@@ -106,6 +104,32 @@ const logout=async(userId)=>{
     await User.findByIdAndUpdate(userId,{refreshToken:null});
 }
 
+const generateNewAcessToken=async (token)=>{
+    if(!token) throw ApiError.badRequest("Token missing");
+    let decoded=verifyRefreshToken(token);
+    
+    if(!decoded) throw ApiError.badRequest("token expired");
+
+
+    const user=await User.findById(decoded.id).select("+refreshToken");
+
+    if(!user) throw ApiError.notFound("user not found");
+
+
+    if(user.refreshToken!==hashToken(token)) throw ApiError.unauthorized("Invalid Token")
+
+    const accessToken= generateAccessToken({id: user._id, email:user.email, role:user.role})
+    
+    const refreshToken= generateRefreshToken({id: user._id, email:user.email, role:user.role})
+        
+
+    user.refreshToken=hashToken(refreshToken);
+    user.save({validateBeforeSave:false});
+
+    return {accessToken};
+
+}
+
 const getMe=async(userId)=>{
     const user=await User.findById(userId);
     if(!user) throw ApiError("user not found");
@@ -133,7 +157,7 @@ const forgotPassword=async({email})=>{
 const resetPassword=async(token, newPassword)=>{
     const hashedToken=hashToken(token);
     const user=await User.findOne({resetPasswordToken:hashedToken}).select("+resetPasswordToken +resetPasswordTokenExpiry");
-
+    
     if(!user) throw ApiError.notFound("user not found");
     if(user.resetPasswordTokenExpiry<Date.now()){
         throw ApiError.badRequest("token expired")
@@ -153,5 +177,6 @@ export {
     getMe,
     forgotPassword,
     resetPassword,
+    generateNewAcessToken
 
 }

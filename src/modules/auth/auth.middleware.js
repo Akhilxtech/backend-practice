@@ -17,6 +17,8 @@ const authenticate=async(req,res,next)=>{
         token=req.headers.authorization.split(" ")[1];
     }
 
+    
+
     if(!token) throw ApiError.unauthorized("Not Authenticated")
 
     const decodedToken=verifyAccessToken(token);
