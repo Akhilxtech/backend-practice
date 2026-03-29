@@ -14,7 +14,7 @@ const verifyAccessToken=(token)=>{
 
 const generateRefreshToken=(payload)=>{
     return jwt.sign(payload,process.env.JWT_REFRESH_SECRET,{
-        expiresIn: process.env.JWT_REFRESH_EXPIRY
+        expiresIn: process.env.JWT_REFRESH_EXPIRY||"1d"
     })
 }
 

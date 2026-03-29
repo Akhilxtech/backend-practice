@@ -1,8 +1,9 @@
 import User from "../auth/auth.model.js"
 import ApiError from "../../common/utils/Api-error-response.js";
 import { generateAccessToken, generateRefreshToken, generateToken } from "../../common/utils/jwt-utils.js";
-import { sendMail, sendVerificationMail } from "../../common/config/mail.js";
+import { sendMail, sendResetPasswordMail, sendVerificationMail } from "../../common/config/mail.js";
 import crypto from "crypto"
+import { devNull } from "os";
 
 const hashToken=(token)=>{
     const hashedToken=crypto.createHash('sha256').update(token).digest('hex');
@@ -19,7 +20,8 @@ const register=async ({name,email,password,role})=>{
         email,
         password,
         role,
-        verificationToken:hashedToken
+        verificationToken:hashedToken,
+        verificationTokenExpiry:Date.now()+5*60*1000,
     })
     try {
         await sendVerificationMail(email,rawToken);
@@ -91,19 +93,65 @@ const login=async({email,password})=>{
 
     const userObj=user.toObject()
 
-    console.log(userObj)
     delete userObj.password
     delete userObj.refreshToken
     delete userObj.verificationToken
-    delete user.verificationTokenExpiry
+    delete userObj.verificationTokenExpiry
 
     return {userObj, accessToken, refreshToken};
 
 }
 
+const logout=async(userId)=>{
+    await User.findByIdAndUpdate(userId,{refreshToken:null});
+}
 
+const getMe=async(userId)=>{
+    const user=await User.findById(userId);
+    if(!user) throw ApiError("user not found");
+    return user;
+}
+
+const forgotPassword=async({email})=>{
+    const user=await User.findOne({email});
+    if(!user) throw ApiError.notFound("user not found");
+
+    const {rawToken,hashedToken}= generateToken();
+
+    user.resetPasswordToken=hashedToken;
+    user.resetPasswordTokenExpiry=Date.now()+5*60*1000,
+    user.save({validateBeforeSave:false});
+    try {
+        await sendResetPasswordMail(email,rawToken);
+        console.log("forgot password mail sent");
+        
+    } catch (error) {
+        console.log("error sending forgotpassword mail",error);
+    }
+}
+
+const resetPassword=async(token, newPassword)=>{
+    const hashedToken=hashToken(token);
+    const user=await User.findOne({resetPasswordToken:hashedToken}).select("+resetPasswordToken +resetPasswordTokenExpiry");
+
+    if(!user) throw ApiError.notFound("user not found");
+    if(user.resetPasswordTokenExpiry<Date.now()){
+        throw ApiError.badRequest("token expired")
+    }
+
+    user.password=newPassword;
+    user.resetPasswordToken=null;
+    user.resetPasswordTokenExpiry=null;
+    await user.save();
+
+}
 export {
     register,
     verifyEmail,
-    login
+    login,
+    logout,
+    getMe,
+    forgotPassword,
+    resetPassword,
+
 }

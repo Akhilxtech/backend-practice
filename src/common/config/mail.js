@@ -12,10 +12,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail=async (to,subject,html)=>{
+const sendMail=async (email,subject,html)=>{
     await transporter.sendMail({
         from: `${process.env.SMTP_FROM_EMAIL}`,
-        to,
+        to:email,
         subject,
         html,
     });
@@ -26,11 +26,23 @@ const sendVerificationMail=async (email,token)=>{
         from: `${process.env.SMTP_FROM_EMAIL}`,
         to:email,
         subject:"Account Verification",
-        html: `<h2>Email Verify Karo</h2>
-        <a href="${process.env.BASE_URL}/verify-email/${token}">
+        html: `<h2>Verify your email</h2>
+        <a href="${process.env.BASE_URL}/verify-email${token}">
           Click here to verify
         </a>`
     });
 }
 
-export {sendMail, sendVerificationMail}
+const sendResetPasswordMail=async (email,token)=>{
+    await transporter.sendMail({
+        from: `${process.env.SMTP_FROM_EMAIL}`,
+        to:email,
+        subject:"Account Verification",
+        html: `<h2>Verify your Email</h2>
+        <a href="${process.env.BASE_URL}/forgot-password/${token}">
+          Click here to verify
+        </a>`
+    });
+}
+
+export {sendMail, sendVerificationMail,sendResetPasswordMail}

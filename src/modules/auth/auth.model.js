@@ -51,7 +51,6 @@ const userSchema=new mongoose.Schema({
     },
     verificationTokenExpiry:{
         type:Date,
-        default:()=> Date.now()+5*60*1000, // 5 mins
         select:false
     }
 
