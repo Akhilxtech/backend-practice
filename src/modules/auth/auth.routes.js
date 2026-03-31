@@ -8,13 +8,18 @@ import * as controller from "../auth/auth.controller.js"
 import { authenticate } from "./auth.middleware.js";
 const router=Router();
 
+
+// public routes
 router.post("/register",validate(RegisterDto),controller.register);
 router.post("/verify-email/:token",controller.verifyEmail);
 router.post("/login",validate(LoginDTO),controller.login);
-router.post("/logout",authenticate,controller.logout);
-router.get("/profile",authenticate,controller.getMe);
 router.post("/forgot-password",validate(ForgotPasswordDTO),controller.forgotPassword);
 router.post("/reset-password/:token",validate(ResetPasswordDTO),controller.resetPassword);
-router.post("/generate-Access-token",controller.newAccessToken);
+router.post("/refresh-token",controller.newAccessToken);
+
+// protected routes
+router.use(authenticate)
+router.post("/logout",controller.logout);
+router.get("/profile",controller.getMe);
 
 export default router

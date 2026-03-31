@@ -22,7 +22,7 @@ const register=async ({name,email,password,role})=>{
         verificationTokenExpiry:Date.now()+5*60*1000,
     })
     try {
-        await sendVerificationMail(email,rawToken);
+        await sendVerificationMail(name,email,rawToken);
     } catch (error) {
         await User.findByIdAndDelete(user?.id);
         console.log("error sending mail: ",error);
@@ -124,9 +124,9 @@ const generateNewAcessToken=async (token)=>{
         
 
     user.refreshToken=hashToken(refreshToken);
-    user.save({validateBeforeSave:false});
+    await user.save({validateBeforeSave:false});
 
-    return {accessToken};
+    return {accessToken, refreshToken};
 
 }
 
@@ -146,7 +146,7 @@ const forgotPassword=async({email})=>{
     user.resetPasswordTokenExpiry=Date.now()+5*60*1000,
     user.save({validateBeforeSave:false});
     try {
-        await sendResetPasswordMail(email,rawToken);
+        await sendResetPasswordMail(user.name,email,rawToken);
         console.log("forgot password mail sent");
         
     } catch (error) {

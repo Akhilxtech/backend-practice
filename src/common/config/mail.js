@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer"
+import { emailBody } from "./mailgen.js";
 
-
-// Create a transporter using SMTP
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_TRAP_HOST,
   port: 2525,
@@ -21,27 +20,30 @@ const sendMail=async (email,subject,html)=>{
     });
 }
 
-const sendVerificationMail=async (email,token)=>{
+const sendVerificationMail=async (name,email,token)=>{
+
+    const body=emailBody(name,`verify-email`,"To continue Verify your email", "verify your email",token);
     await transporter.sendMail({
         from: `${process.env.SMTP_FROM_EMAIL}`,
         to:email,
         subject:"Account Verification",
-        html: `<h2>Verify your email</h2>
-        <a href="${process.env.BASE_URL}/verify-email${token}">
-          Click here to verify
-        </a>`
+        html: body
     });
 }
 
-const sendResetPasswordMail=async (email,token)=>{
+const sendResetPasswordMail=async (name,email,token)=>{
+    const options={
+      path:"forgot-password",
+      intro:"we received your request to reset your password",
+      instructions:"To reset your password please click below button",
+      btnText:"Reset Password"
+    }
+    const body=emailBody(name,options.path,options.btnText,options.intro,options.instructions,token);
     await transporter.sendMail({
         from: `${process.env.SMTP_FROM_EMAIL}`,
         to:email,
         subject:"Account Verification",
-        html: `<h2>Verify your Email</h2>
-        <a href="${process.env.BASE_URL}/forgot-password/${token}">
-          Click here to verify
-        </a>`
+        html: body
     });
 }
 

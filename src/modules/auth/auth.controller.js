@@ -1,6 +1,7 @@
 import * as authService from "../auth/auth.service.js"
 import ApiResponse from "../../common/utils/Api-response.js"
 import cookieParser from "cookie-parser";
+import ApiError from "../../common/utils/Api-error-response.js";
 
 const register=async (req,res)=>{
     const user=await authService.register(req.body);
@@ -93,7 +94,15 @@ const resetPassword=async(req,res)=>{
 
 const newAccessToken=async (req,res)=>{
     try {
-        const {accessToken}=await authService.generateNewAcessToken(req.cookies?.refreshToken);
+        const token=req.cookies?.refreshToken;
+        if(!token) throw ApiError.notFound("refresh token is missing");
+        const {accessToken, refreshToken}=await authService.generateNewAcessToken(token);
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          });       
         ApiResponse.ok(res,"Access Token Generated successfully",accessToken);
     } catch (error) {
         console.log("error generating access token");
