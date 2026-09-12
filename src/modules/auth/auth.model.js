@@ -52,6 +52,10 @@ const userSchema=new mongoose.Schema({
     verificationTokenExpiry:{
         type:Date,
         select:false
+    },
+    avatar:{
+        type: String,
+        default: false
     }
 
 

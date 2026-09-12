@@ -81,7 +81,6 @@ const resetPassword=async(req,res)=>{
         const {token}=req.params;
         const {newPassword}=req.body;
 
-        console.log(req.body);
         
 
         
@@ -92,21 +91,53 @@ const resetPassword=async(req,res)=>{
     }
 }
 
-const newAccessToken=async (req,res)=>{
+const newAccessToken = async (req, res, next) => {
+
     try {
-        const token=req.cookies?.refreshToken;
-        if(!token) throw ApiError.notFound("refresh token is missing");
-        const {accessToken, refreshToken}=await authService.generateNewAcessToken(token);
+
+        const token = req.cookies?.refreshToken;
+
+        if (!token) {
+            throw ApiError.unauthorized("Refresh token is missing");
+        }
+
+        const { accessToken, refreshToken } =
+            await authService.generateNewAcessToken(token);
+
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });       
-        ApiResponse.ok(res,"Access Token Generated successfully",accessToken);
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return ApiResponse.ok(
+            res,
+            "Access Token Generated successfully",
+            { accessToken }
+        );
+
     } catch (error) {
-        console.log("error generating access token");
+
+        next(error);
+    }
+};
+
+const uploadAvatar=async(req,res)=>{
+    try {
         
+        const file=req.file;
+        if(!file){
+            return ApiError.badRequest("No file uploaded. please send file with field name avatar")
+        }
+
+
+        const result=await authService.handleupload(req.user.id,file);
+        
+        return ApiResponse.ok(res,"Avatar uploaded successfully",{avatarURL:result.url})
+    } catch (error) {
+        return ApiError.forBidden(error.message || "error uploading avatar")
     }
 }
-export {register,verifyEmail,login,logout, getMe,forgotPassword,resetPassword,newAccessToken};
+
+export {register,verifyEmail,login,logout, getMe,forgotPassword,resetPassword,newAccessToken,uploadAvatar};

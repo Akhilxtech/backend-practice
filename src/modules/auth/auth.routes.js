@@ -6,6 +6,7 @@ import ForgotPasswordDTO from "./dto/forgot-password.dto..js"
 import ResetPasswordDTO from "./dto/reset-password.dto.js";
 import * as controller from "../auth/auth.controller.js"
 import { authenticate } from "./auth.middleware.js";
+import upload from "../../common/middlewares/multer.middleware.js"
 const router=Router();
 
 
@@ -21,5 +22,6 @@ router.post("/refresh-token",controller.newAccessToken);
 router.use(authenticate)
 router.post("/logout",controller.logout);
 router.get("/profile",controller.getMe);
+router.post("/avatar",upload.single("avatar"), controller.uploadAvatar)
 
 export default router

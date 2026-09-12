@@ -2,9 +2,10 @@ import User from "../auth/auth.model.js"
 import ApiError from "../../common/utils/Api-error-response.js";
 import { generateAccessToken, generateRefreshToken, generateToken, hashToken, verifyRefreshToken } from "../../common/utils/jwt-utils.js";
 import { sendMail, sendResetPasswordMail, sendVerificationMail } from "../../common/config/mail.js";
-import crypto from "crypto"
-import { devNull } from "os";
-import { log } from "console";
+
+import fs from "fs"
+import imageKitClient from "../../common/config/imagekit.js";
+import ImageKit, { toFile } from '@imagekit/nodejs';
 
 
 
@@ -104,32 +105,62 @@ const logout=async(userId)=>{
     await User.findByIdAndUpdate(userId,{refreshToken:null});
 }
 
-const generateNewAcessToken=async (token)=>{
-    if(!token) throw ApiError.badRequest("Token missing");
-    let decoded=verifyRefreshToken(token);
-    
-    if(!decoded) throw ApiError.badRequest("token expired");
+const generateNewAcessToken = async (token) => {
 
+    if (!token) {
+        throw ApiError.badRequest("Refresh token missing");
+    }
 
-    const user=await User.findById(decoded.id).select("+refreshToken");
+    let decoded;
 
-    if(!user) throw ApiError.notFound("user not found");
+    try {
+        decoded = verifyRefreshToken(token);
+    } catch (error) {
 
+        if (error.name === "TokenExpiredError") {
+            throw ApiError.unauthorized(
+                "Refresh token expired. Please login again."
+            );
+        }
 
-    if(user.refreshToken!==hashToken(token)) throw ApiError.unauthorized("Invalid Token")
+        throw ApiError.unauthorized("Invalid refresh token");
+    }
 
-    const accessToken= generateAccessToken({id: user._id, email:user.email, role:user.role})
-    
-    const refreshToken= generateRefreshToken({id: user._id, email:user.email, role:user.role})
-        
+    const user = await User.findById(decoded.id)
+        .select("+refreshToken");
 
-    user.refreshToken=hashToken(refreshToken);
-    await user.save({validateBeforeSave:false});
+    if (!user) {
+        throw ApiError.notFound("User not found");
+    }
 
-    return {accessToken, refreshToken};
+    if (user.refreshToken !== hashToken(token)) {
+        throw ApiError.unauthorized("Invalid refresh token");
+    }
 
-}
+    const accessToken = generateAccessToken({
+        id: user._id,
+        email: user.email,
+        role: user.role
+    });
 
+    const refreshToken = generateRefreshToken({
+        id: user._id,
+        email: user.email,
+        role: user.role
+    });
+
+    // Rotate refresh token
+    user.refreshToken = hashToken(refreshToken);
+
+    await user.save({
+        validateBeforeSave: false
+    });
+
+    return {
+        accessToken,
+        refreshToken
+    };
+};
 const getMe=async(userId)=>{
     const user=await User.findById(userId);
     if(!user) throw ApiError("user not found");
@@ -169,6 +200,44 @@ const resetPassword=async(token, newPassword)=>{
     await user.save();
 
 }
+
+
+const handleupload=async(id,file)=>{
+   try {
+
+    const user=await User.findById(id);
+    if(!user){
+        throw new ApiError.missing("user not found");
+    }
+
+    // const fileStream=fs.createReadStream(file.path)
+
+
+    const uploadResponse=await imageKitClient.files.upload({
+
+        file: await toFile(file.buffer),
+        fileName:file.originalname,
+        folder:"/user-avatars"
+    })
+    user.avatar=uploadResponse.url
+    await user.save({validateBeforeSave:false})
+
+    // fs.unlinkSync(file.path);
+    return {
+        url:uploadResponse.url,
+        fileId:uploadResponse.fileId
+    }
+
+
+        
+
+ 
+   } catch (error) {
+        console.log("handleupload error:", error); // yeh kya print karta hai?
+        throw error;
+   }
+
+}
 export {
     register,
     verifyEmail,
@@ -177,6 +246,7 @@ export {
     getMe,
     forgotPassword,
     resetPassword,
-    generateNewAcessToken
+    generateNewAcessToken,
+    handleupload
 
 }

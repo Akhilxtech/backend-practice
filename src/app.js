@@ -1,6 +1,7 @@
 import express, { urlencoded } from "express";
 import authRoute from "../src/modules/auth/auth.routes.js"
 import cookieParser from "cookie-parser";
+import oidc from "../src/modules/oidc/oidc.routes.js"
 import multer from "multer";
 import ApiResponse from "./common/utils/Api-response.js";
 import path from "path"
@@ -17,16 +18,16 @@ app.use(cookieParser())
 
 // store in disk
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/uploads')
-  },
-  filename: function (req, file, cb) {    
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    const ext=path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext)
-  }
-})
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'public/uploads')
+//   },
+//   filename: function (req, file, cb) {    
+//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+//     const ext=path.extname(file.originalname);
+//     cb(null, file.fieldname + '-' + uniqueSuffix + ext)
+//   }
+// })
 
 
 // store in memory
@@ -34,21 +35,21 @@ const storage = multer.diskStorage({
 // const storage=multer.memoryStorage();
 
 
-const upload = multer({ 
-    storage: storage, 
-    limits:{// to limit filesize
-    fileSize:1024*1024*2
-    },
-    fileFilter:(req,file,cb)=>{
-        const allowedList=["image/png","image/jpeg", "application/pdf"]
-        if(allowedList.includes(file.mimetype)){
-            cb(null, true)
-        }
-        else{
-            cb(new error("file type not accepted"),false)
-        }
-    }
-})
+// const upload = multer({ 
+//     storage: storage, 
+//     limits:{// to limit filesize
+//     fileSize:1024*1024*2
+//     },
+//     fileFilter:(req,file,cb)=>{
+//         const allowedList=["image/png","image/jpeg", "application/pdf"]
+//         if(allowedList.includes(file.mimetype)){
+//             cb(null, true)
+//         }
+//         else{
+//             cb(new error("file type not accepted"),false)
+//         }
+//     }
+// })
 
 
 
@@ -83,5 +84,6 @@ const upload = multer({
 
 
 app.use("/api/auth/",authRoute)
+app.use("/api/oidc",oidc);
 
 export default app;

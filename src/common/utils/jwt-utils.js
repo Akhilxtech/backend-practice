@@ -1,15 +1,23 @@
 import crypto from "crypto"
 import jwt from "jsonwebtoken"
+import fs from "fs"
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const pvtKey = readFileSync(join(process.cwd(), "src/modules/oidc/keys/private.pem"));
+const pubKey = readFileSync(join(process.cwd(), "src/modules/oidc/keys/public.pem"));
+
 
 
 const generateAccessToken= (payload)=>{
-    return jwt.sign(payload,process.env.JWT_ACCESS_SECRET,{
+    return jwt.sign(payload,pvtKey,{
+        algorithm:"RS256",
         expiresIn:process.env.JWT_ACCESS_EXPIRY||"15m"
     })
 }
 
 const verifyAccessToken=(token)=>{
-    return jwt.verify(token,process.env.JWT_ACCESS_SECRET);
+    return jwt.verify(token,pubKey);
 }
 
 const generateRefreshToken=(payload)=>{
