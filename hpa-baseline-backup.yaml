@@ -1,0 +1,57 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  creationTimestamp: "2026-09-03T12:01:26Z"
+  generation: 1
+  name: auth-service
+  namespace: default
+  resourceVersion: "76054"
+  uid: 4ce7a4a3-2634-4c81-bc2e-b77bc141196b
+spec:
+  maxReplicas: 5
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 50
+        type: Utilization
+    type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-service
+status:
+  conditions:
+  - lastTransitionTime: "2026-09-03T12:01:26Z"
+    message: recommended size matches current size
+    reason: ReadyForNewScale
+    status: "True"
+    type: AbleToScale
+  - lastTransitionTime: "2026-10-19T17:32:40Z"
+    message: the HPA was able to successfully calculate a replica count from cpu resource
+      utilization (percentage of request)
+    reason: ValidMetricFound
+    status: "True"
+    type: ScalingActive
+  - lastTransitionTime: "2026-10-19T18:41:35Z"
+    message: the desired count is within the acceptable range
+    reason: DesiredWithinRange
+    status: "False"
+    type: ScalingLimited
+  - lastTransitionTime: "2026-09-03T12:05:42Z"
+    message: the HPA controller did not scale the workload to zero
+    reason: NotScaledToZero
+    status: "False"
+    type: ScaledToZero
+  currentMetrics:
+  - resource:
+      current:
+        averageUtilization: 13
+        averageValue: 13m
+      name: cpu
+    type: Resource
+  currentReplicas: 1
+  desiredReplicas: 1
+  lastScaleTime: "2026-10-19T18:46:38Z"
+  observedGeneration: 1

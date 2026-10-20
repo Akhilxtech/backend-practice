@@ -43,3 +43,10 @@ bash
 minikube dashboard
 
    kubectl rollout restart deployment auth-service
+
+
+
+   ## Grafana
+
+   username- admin 
+   pwd-aYcBTbpUi8wutASPZcbXUh5E3QaLgMtVgZk18dZ9

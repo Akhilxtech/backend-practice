@@ -5,11 +5,24 @@ import oidc from "../src/modules/oidc/oidc.routes.js"
 import multer from "multer";
 import ApiResponse from "./common/utils/Api-response.js";
 import path from "path"
+import { registry, metricsMiddleware } from "./common/config/metrics.js";
+
 
 import fs from "fs"
 import { error, log } from "console";
 
 const app=express();
+app.use(metricsMiddleware);
+
+app.get("/metrics", async (req, res, next) => {
+  try {
+    res.set("Content-Type", registry.contentType);
+    res.send(await registry.metrics());
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: backend-practice-auth-service:latest
+          image: backend-practice-auth-service:metrics-v1
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
